@@ -32,16 +32,22 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	// Update the simulation
+	// Check if the simulation is paused. If so, maintain the
+	// current state; otherwise, advance the simulation by one step.
 	var newSimulation *simulation.Simulation
 	if g.simulationPaused {
 		newSimulation = g.simulation
 	} else {
 		newSimulation = g.simulation.Step()
 	}
-	// Update the background image
+	// Draw the new simulation state onto the simulation image and
+	// update the background image to reflect the current game state.
 	newSimulation.Draw(g.simulationImage)
 	g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
+	// Iterate through each wire in the simulation circuit. Update
+	// the wire's image if its charge has changed since the last
+	// simulation step.
+
 	wires := g.simulation.Circuit().Wires()
 	for i, wire := range wires {
 		oldCharge := g.simulation.State(wire).Charge()
@@ -57,8 +63,9 @@ func (g *Game) Update() error {
 		g.backgroundImage.DrawImage(g.wireImages[i], op)
 	}
 	g.simulation = newSimulation
-	//
-	// Handle keyboard and mouse inputs
+
+	// Process keyboard and mouse actions.
+
 	g.handleKeyboard()
 	g.handleMouse()
 
@@ -67,6 +74,7 @@ func (g *Game) Update() error {
 
 func (g *Game) handleKeyboard() error {
 	// Handle various keyboard inputs
+
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		return fmt.Errorf("closing game")
 	}
@@ -77,8 +85,8 @@ func (g *Game) handleKeyboard() error {
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyP) {
 		// Debounce the keypress
-		if g.key_debounce > 0{
-			g.key_debounce --
+		if g.key_debounce > 0 {
+			g.key_debounce--
 			return nil
 		}
 		g.key_debounce = 10
@@ -124,6 +132,7 @@ func (g *Game) handleKeyboard() error {
 }
 
 func (g *Game) handleMouse() {
+
 	// Handle mouse inputs
 	// Get the mouse position. If the mouse has moved, update the cursor position.
 	x, y := ebiten.CursorPosition()
@@ -133,12 +142,13 @@ func (g *Game) handleMouse() {
 		g.mouse_cursory = y
 		g.cursorx = g.mouse_cursorx
 		g.cursory = g.mouse_cursory
+		g.leftMouseButtonPressed = false // Reset the left mouse button pressed flag
+		// this will allow the user to click and drag the mouse to draw a wire
 	} else {
 		// The mouse has not moved
-		g.mouse_cursorx = x
-		g.mouse_cursory = y
 	}
 	// Check if the left mouse button is pressed
+	// g.leftMouseButtonPressed is used to test if the left mouse button has just been pressed or is being held down
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		if !g.leftMouseButtonPressed {
 			// The left mouse button has just been pressed
@@ -147,7 +157,7 @@ func (g *Game) handleMouse() {
 			g.leftMouseButtonPressed = true
 		} else {
 			// The left mouse button is being held down
-			// If the cursor has moved (i.e. through arrow keys) flip the pixel
+			// If the cursor has moved (i.e. through arrow keys) then flip the pixel
 			if g.cursorx != g.mouse_cursorx || g.cursory != g.mouse_cursory {
 				flipPixel(g.cursorx, g.cursory, g.simulationImage)
 				g.reloadSimulation()
