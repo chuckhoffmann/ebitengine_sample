@@ -12,6 +12,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	// "github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
@@ -19,7 +20,7 @@ type Game struct {
 	simulationImage        *image.Paletted
 	backgroundImage        *ebiten.Image
 	wireImages             []*ebiten.Image
-	width                  int
+	width                  int 
 	height                 int
 	scale                  int
 	cursorx                int
@@ -28,7 +29,6 @@ type Game struct {
 	mouse_cursory          int
 	leftMouseButtonPressed bool
 	simulationPaused       bool
-	key_debounce           int
 }
 
 func (g *Game) Update() error {
@@ -79,17 +79,12 @@ func (g *Game) handleKeyboard() error {
 		return fmt.Errorf("closing game")
 	}
 	if ebiten.IsKeyPressed((ebiten.KeySpace)) {
-
 		flipPixel(g.cursorx, g.cursory, g.simulationImage)
 		g.reloadSimulation()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyP) {
 		// Debounce the keypress
-		if g.key_debounce > 0 {
-			g.key_debounce--
-			return nil
-		}
-		g.key_debounce = 10
+
 		// Pause the simulation
 		g.simulationPaused = !g.simulationPaused
 		drawPoweredDown(g.simulationImage)
@@ -142,10 +137,9 @@ func (g *Game) handleMouse() {
 		g.mouse_cursory = y
 		g.cursorx = g.mouse_cursorx
 		g.cursory = g.mouse_cursory
-		g.leftMouseButtonPressed = false // Reset the left mouse button pressed flag
-		// this will allow the user to click and drag the mouse to draw a wire
-	} else {
-		// The mouse has not moved
+		// Reset the left mouse button pressed flag. This will allow the user to click and drag the mouse to draw a wire
+		g.leftMouseButtonPressed = false 
+		
 	}
 	// Check if the left mouse button is pressed
 	// g.leftMouseButtonPressed is used to test if the left mouse button has just been pressed or is being held down
@@ -156,7 +150,7 @@ func (g *Game) handleMouse() {
 			g.reloadSimulation()
 			g.leftMouseButtonPressed = true
 		} else {
-			// The left mouse button is being held down
+			// The left mouse button is being held down.
 			// If the cursor has moved (i.e. through arrow keys) then flip the pixel
 			if g.cursorx != g.mouse_cursorx || g.cursory != g.mouse_cursory {
 				flipPixel(g.cursorx, g.cursory, g.simulationImage)
@@ -217,18 +211,28 @@ func main() {
 		cursory: height / 2,
 	}
 	ebiten.SetTPS(speed)
-	// Create a new blank simulation image
-	p := color.Palette{
-		color.Black,
-		color.RGBA{0x88, 0, 0, 0xFF},
-		color.RGBA{0xFF, 0, 0, 0xFF},
-		color.RGBA{0xFF, 0x22, 0, 0xFF},
-		color.RGBA{0xFF, 0x44, 0, 0xFF},
-		color.RGBA{0xFF, 0x66, 0, 0xFF},
-		color.RGBA{0xFF, 0x88, 0, 0xFF},
-		color.RGBA{0xFF, 0xAA, 0, 0xFF},
+	// If a filename was passed in, load the image
+	// and set the simulation image to it.
+	// Else create a new blank simulation image
+	// and set the simulation image to it.
+	if len(flag.Args()) > 0 {
+		filename := flag.Args()[0]
+		fmt.Println("Loading image from file: ", filename)
+		f, err := os.Open(filename)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer f.Close()
+		img, err := gif.Decode(f)
+		if err != nil {
+			fmt.Println(err)
+		}
+		game.simulationImage = img.(*image.Paletted)
+		game.width = game.simulationImage.Bounds().Dx()
+		game.height = game.simulationImage.Bounds().Dy()
+	} else {
+		game.simulationImage = drawBlankSimulationImage(game.width, game.height)
 	}
-	game.simulationImage = image.NewPaletted(image.Rect(0, 0, game.width, game.height), p)
 	game.simulation = simulation.New(game.simulationImage)
 	game.backgroundImage = ebiten.NewImageFromImage(game.simulationImage)
 	game.reloadSimulation()
@@ -298,4 +302,20 @@ func drawPoweredDown(img *image.Paletted) {
 		}
 	}
 
+}
+
+func drawBlankSimulationImage(width, height int) *image.Paletted {
+	// Draw a blank simulation image
+	p := color.Palette{
+		color.Black,
+		color.RGBA{0x88, 0, 0, 0xFF},
+		color.RGBA{0xFF, 0, 0, 0xFF},
+		color.RGBA{0xFF, 0x22, 0, 0xFF},
+		color.RGBA{0xFF, 0x44, 0, 0xFF},
+		color.RGBA{0xFF, 0x66, 0, 0xFF},
+		color.RGBA{0xFF, 0x88, 0, 0xFF},
+		color.RGBA{0xFF, 0xAA, 0, 0xFF},
+	}
+	img := image.NewPaletted(image.Rect(0, 0, width, height), p)
+	return img
 }
