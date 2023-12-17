@@ -11,8 +11,8 @@ import (
 	"github.com/chuckhoffmann/wired-logic/simulation"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	// "github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
@@ -20,7 +20,7 @@ type Game struct {
 	simulationImage        *image.Paletted
 	backgroundImage        *ebiten.Image
 	wireImages             []*ebiten.Image
-	width                  int 
+	width                  int
 	height                 int
 	scale                  int
 	cursorx                int
@@ -83,12 +83,12 @@ func (g *Game) handleKeyboard() error {
 		g.reloadSimulation()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyP) {
-		// Debounce the keypress
-
 		// Pause the simulation
-		g.simulationPaused = !g.simulationPaused
-		drawPoweredDown(g.simulationImage)
-		g.reloadSimulation()
+		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+			g.simulationPaused = !g.simulationPaused
+			drawPoweredDown(g.simulationImage)
+			g.reloadSimulation()
+		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyF) {
 		saveImage(g.simulationImage, "test.gif")
@@ -105,9 +105,6 @@ func (g *Game) handleKeyboard() error {
 		if g.cursory < g.height-1 {
 			g.cursory++
 		}
-	default:
-		// Do nothing
-
 	}
 
 	switch {
@@ -138,8 +135,8 @@ func (g *Game) handleMouse() {
 		g.cursorx = g.mouse_cursorx
 		g.cursory = g.mouse_cursory
 		// Reset the left mouse button pressed flag. This will allow the user to click and drag the mouse to draw a wire
-		g.leftMouseButtonPressed = false 
-		
+		g.leftMouseButtonPressed = false
+
 	}
 	// Check if the left mouse button is pressed
 	// g.leftMouseButtonPressed is used to test if the left mouse button has just been pressed or is being held down
@@ -186,7 +183,7 @@ func (g *Game) reloadSimulation() {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.backgroundImage, nil)
-	vector.DrawFilledRect(screen, float32(g.cursorx), float32(g.cursory), float32(1), float32(1), color.RGBA{128, 128, 128, 128}, false)
+	vector.DrawFilledRect(screen, float32(g.cursorx), float32(g.cursory), 1, 1, color.RGBA{128, 128, 128, 128}, false)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -213,8 +210,6 @@ func main() {
 	ebiten.SetTPS(speed)
 	// If a filename was passed in, load the image
 	// and set the simulation image to it.
-	// Else create a new blank simulation image
-	// and set the simulation image to it.
 	if len(flag.Args()) > 0 {
 		filename := flag.Args()[0]
 		fmt.Println("Loading image from file: ", filename)
@@ -231,6 +226,8 @@ func main() {
 		game.width = game.simulationImage.Bounds().Dx()
 		game.height = game.simulationImage.Bounds().Dy()
 	} else {
+		// Else create a new blank simulation image
+		// and set the simulation image to it.
 		game.simulationImage = drawBlankSimulationImage(game.width, game.height)
 	}
 	game.simulation = simulation.New(game.simulationImage)
