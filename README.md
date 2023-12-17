@@ -15,5 +15,5 @@ In addition to the command line arguments, the program can load a gif file as a 
 
 Assuming you have compiled the program into a file called `wired-logic`,here is a sample command line:
 
-`./wired-logic -scale 12 -width 64 -height 64 -speed 15`
+`./wired-logic -scale 12 -width 64 -height 64 -speed 15 my-gif.gif`
 
