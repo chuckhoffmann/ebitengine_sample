@@ -44,6 +44,7 @@ func (g *Game) Update() error {
 	// update the background image to reflect the current game state.
 	newSimulation.Draw(g.simulationImage)
 	g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
+	
 	// Iterate through each wire in the simulation circuit. Update
 	// the wire's image if its charge has changed since the last
 	// simulation step.
@@ -79,8 +80,10 @@ func (g *Game) handleKeyboard() error {
 		return fmt.Errorf("closing game")
 	}
 	if ebiten.IsKeyPressed((ebiten.KeySpace)) {
-		flipPixel(g.cursorx, g.cursory, g.simulationImage)
-		g.reloadSimulation()
+		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+			flipPixel(g.cursorx, g.cursory, g.simulationImage)
+			g.reloadSimulation()
+		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyP) {
 		// Pause the simulation
@@ -91,6 +94,8 @@ func (g *Game) handleKeyboard() error {
 		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyF) {
+		// Halt the simulation and save the current state to a file
+		// TODO: Add dialog box to get filename
 		saveImage(g.simulationImage, "test.gif")
 	}
 
