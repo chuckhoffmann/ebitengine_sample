@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/gif"
+	"log"
 	"os"
 	"time"
 
@@ -114,10 +115,14 @@ func (g *Game) handleKeyboard() error {
 					fmt.Println("Save cancelled")
 					return nil
 				}
+				fmt.Println("Error in file dialog: ", err)
+				return err
+			}
+			err = saveImage(g.simulationImage, filename)
+			if err != nil {
 				fmt.Println("Error saving file: ", err)
 				return err
 			}
-			saveImage(g.simulationImage, filename)
 		}
 	}
 
@@ -242,14 +247,18 @@ func main() {
 		fmt.Println("Loading image from file: ", filename)
 		f, err := os.Open(filename)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 		defer f.Close()
 		img, err := gif.Decode(f)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
-		game.simulationImage = img.(*image.Paletted)
+		pal, ok := img.(*image.Paletted)
+		if !ok {
+			log.Fatal("Image is not a paletted image")
+		}
+		game.simulationImage = pal
 		game.width = game.simulationImage.Bounds().Dx()
 		game.height = game.simulationImage.Bounds().Dy()
 	} else {
@@ -264,7 +273,7 @@ func main() {
 	ebiten.SetWindowSize(game.width*game.scale, game.height*game.scale)
 	ebiten.SetWindowTitle("Wired Logic Sandbox")
 	if err := ebiten.RunGame(game); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 	fmt.Println("All done!")
 }
@@ -273,17 +282,18 @@ func init() {
 	fmt.Println("Starting the program...")
 }
 
-func saveImage(img *image.Paletted, filename string) {
+func saveImage(img *image.Paletted, filename string) error {
 	// Create a new file
 	f, err := os.Create(filename)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	defer f.Close()
 	// Encode the image as a gif
 	if err := gif.Encode(f, img, nil); err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
 func flipPixel(x, y int, img *image.Paletted) {
