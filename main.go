@@ -7,12 +7,15 @@ import (
 	"image/color"
 	"image/gif"
 	"os"
+	"time"
 
 	"github.com/chuckhoffmann/wired-logic/simulation"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+
+	"github.com/sqweek/dialog"
 )
 
 type Game struct {
@@ -101,8 +104,21 @@ func (g *Game) handleKeyboard() error {
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyF) {
 		// Halt the simulation and save the current state to a file
-		// TODO: Add dialog box to get filename
-		saveImage(g.simulationImage, "test.gif")
+		if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+			gifFilename := fmt.Sprintf("test-%d.gif", time.Now().Unix())
+			filename, err := dialog.File().Filter("GIF files", "gif").Title("Save simulation state").SetStartFile(gifFilename).Save()
+			if err != nil {
+				// Check if the error is because the user cancelled the save dialog. 
+				// If so, just return nil; otherwise, print the error and return it.
+				if err.Error() == "Cancelled" {
+					fmt.Println("Save cancelled")
+					return nil
+				}
+				fmt.Println("Error saving file: ", err)
+				return err
+			}
+			saveImage(g.simulationImage, filename)
+		}
 	}
 
 	switch {
