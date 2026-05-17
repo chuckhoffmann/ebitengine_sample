@@ -87,12 +87,12 @@ func (g *Game) handleKeyboard() error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		return fmt.Errorf("Closing game")
 	}
-	if ebiten.IsKeyPressed((ebiten.KeySpace)) {
-		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-			g.reloadSimulation()
-		}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		flipPixel(g.cursorX, g.cursorY, g.simulationImage)
+		g.reloadSimulation()
 	}
+
 	if ebiten.IsKeyPressed(ebiten.KeyP) {
 		// Pause/ unpause the simulation. When paused, the simulation will be redrawn in a powered-down state.
 		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
