@@ -68,7 +68,10 @@ func (g *Game) Update() error {
 	}
 	// Process keyboard and mouse actions.
 
-	g.handleKeyboard()
+	err := g.handleKeyboard()
+	if err != nil {
+		return err
+	}
 	g.handleMouse()
 
 	return nil
@@ -78,7 +81,7 @@ func (g *Game) handleKeyboard() error {
 	// Handle various keyboard inputs
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		return fmt.Errorf("closing game")
+		return fmt.Errorf("Closing game")
 	}
 	if ebiten.IsKeyPressed((ebiten.KeySpace)) {
 		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
@@ -87,10 +90,12 @@ func (g *Game) handleKeyboard() error {
 		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyP) {
-		// Pause the simulation
+		// Pause/ unpause the simulation. When paused, the simulation will be redrawn in a powered-down state.
 		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
 			g.simulationPaused = !g.simulationPaused
-			drawPoweredDown(g.simulationImage)
+			if g.simulationPaused {
+				drawPoweredDown(g.simulationImage)
+			}
 			g.reloadSimulation()
 		}
 	}

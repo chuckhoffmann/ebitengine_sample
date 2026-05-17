@@ -1,4 +1,4 @@
-This code is basically a rewrite of Martin Kirsche's Wired Logic Sandbox, with some functionality added.
+This code is basically a rewrite of Martin Kirsche's Wired Logic Sandbox using Ebitengine v2,with some functionality added.
 
 ## Command line arguments:
 `-scale` <number> - sets the scale of the window (default: 12)
@@ -17,3 +17,9 @@ Assuming you have compiled the program into a file called `wired-logic`,here is 
 
 `./wired-logic -scale 12 -width 64 -height 64 -speed 15 my-gif.gif`
 
+## Hotkeys:
+`Esc` - close the game.
+`P` - pause/unpause the simulation. When paused, the simulation will be redrawn in a powered-down state.
+`F` - save the current simulation state as a gif file. The file will be saved in the current directory with the name `test.gif`.
+
+`Space` - toggle the pixel under the cursor.
