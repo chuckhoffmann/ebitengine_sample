@@ -27,10 +27,10 @@ type Game struct {
 	width                  int
 	height                 int
 	scale                  int
-	cursorx                int
-	cursory                int
-	mouse_cursorx          int
-	mouse_cursory          int
+	cursorX                int
+	cursorY                int
+	mouseCursorX          int
+	mouseCursorY          int
 	leftMouseButtonPressed bool
 	simulationPaused       bool
 }
@@ -89,7 +89,7 @@ func (g *Game) handleKeyboard() error {
 	}
 	if ebiten.IsKeyPressed((ebiten.KeySpace)) {
 		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-			flipPixel(g.cursorx, g.cursory, g.simulationImage)
+			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
 			g.reloadSimulation()
 		}
 	}
@@ -130,12 +130,12 @@ func (g *Game) handleKeyboard() error {
 	// Handle the arrow keys since up and down can be pressed at the same time.
 	// if both are pressed, the evaluation order is W, ArrowUp, S, ArrowDown
 	case ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyUp):
-		if g.cursory > 0 {
-			g.cursory--
+		if g.cursorY > 0 {
+			g.cursorY--
 		}
 	case ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyDown):
-		if g.cursory < g.height-1 {
-			g.cursory++
+		if g.cursorY < g.height-1 {
+			g.cursorY++
 		}
 	}
 
@@ -143,12 +143,12 @@ func (g *Game) handleKeyboard() error {
 	// Handle the arrow keys since left and right can be pressed at the same time.
 	// if both are pressed, the evaluation order is A, ArrowLeft, D, ArrowRight
 	case ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyLeft):
-		if g.cursorx > 0 {
-			g.cursorx--
+		if g.cursorX > 0 {
+			g.cursorX--
 		}
 	case ebiten.IsKeyPressed(ebiten.KeyD) || ebiten.IsKeyPressed(ebiten.KeyRight):
-		if g.cursorx < g.width-1 {
-			g.cursorx++
+		if g.cursorX < g.width-1 {
+			g.cursorX++
 		}
 	}
 
@@ -160,12 +160,12 @@ func (g *Game) handleMouse() {
 	// Handle mouse inputs
 	// Get the mouse position. If the mouse has moved, update the cursor position.
 	x, y := ebiten.CursorPosition()
-	if x != g.mouse_cursorx || y != g.mouse_cursory {
+	if x != g.mouseCursorX || y != g.mouseCursorY {
 		// The mouse has moved
-		g.mouse_cursorx = x
-		g.mouse_cursory = y
-		g.cursorx = g.mouse_cursorx
-		g.cursory = g.mouse_cursory
+		g.mouseCursorX = x
+		g.mouseCursorY = y
+		g.cursorX = g.mouseCursorX
+		g.cursorY = g.mouseCursorY
 		// Reset the left mouse button pressed flag. This will allow the user to click and drag the mouse to draw a wire
 		g.leftMouseButtonPressed = false
 
@@ -175,14 +175,14 @@ func (g *Game) handleMouse() {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		if !g.leftMouseButtonPressed {
 			// The left mouse button has just been pressed
-			flipPixel(g.cursorx, g.cursory, g.simulationImage)
+			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
 			g.reloadSimulation()
 			g.leftMouseButtonPressed = true
 		} else {
 			// The left mouse button is being held down.
 			// If the cursor has moved (i.e. through arrow keys) then flip the pixel
-			if g.cursorx != g.mouse_cursorx || g.cursory != g.mouse_cursory {
-				flipPixel(g.cursorx, g.cursory, g.simulationImage)
+			if g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY {
+				flipPixel(g.cursorX, g.cursorY, g.simulationImage)
 				g.reloadSimulation()
 			}
 		}
@@ -215,7 +215,7 @@ func (g *Game) reloadSimulation() {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.backgroundImage, nil)
-	vector.DrawFilledRect(screen, float32(g.cursorx), float32(g.cursory), 1, 1, color.RGBA{128, 128, 128, 128}, false)
+	vector.DrawFilledRect(screen, float32(g.cursorX), float32(g.cursorY), 1, 1, color.RGBA{128, 128, 128, 128}, false)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -236,8 +236,8 @@ func main() {
 		width:   width,
 		height:  height,
 		scale:   scale,
-		cursorx: width / 2,
-		cursory: height / 2,
+		cursorX: width / 2,
+		cursorY: height / 2,
 	}
 	ebiten.SetTPS(speed)
 	// If a filename was passed in, load the image
