@@ -32,39 +32,40 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	// Check if the simulation is paused. If so, maintain the
-	// current state; otherwise, advance the simulation by one step.
-	var newSimulation *simulation.Simulation
-	if g.simulationPaused {
-		newSimulation = g.simulation
-	} else {
-		newSimulation = g.simulation.Step()
-	}
-	// Draw the new simulation state onto the simulation image and
-	// update the background image to reflect the current game state.
-	newSimulation.Draw(g.simulationImage)
-	g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
+	// Check if the simulation is paused. If so, just update the background image 
+	// to reflect the current state; otherwise, advance the simulation by one step.
 	
-	// Iterate through each wire in the simulation circuit. Update
-	// the wire's image if its charge has changed since the last
-	// simulation step.
+	if g.simulationPaused {
+		g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
+	} else {
+		var newSimulation *simulation.Simulation
+		newSimulation = g.simulation.Step()
+	
+		// Draw the new simulation state onto the simulation image and
+		// update the background image to reflect the current game state.
+		newSimulation.Draw(g.simulationImage)
+		g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
+		
+		// Iterate through each wire in the simulation circuit. Update
+		// the wire's image if its charge has changed since the last
+		// simulation step.
 
-	wires := g.simulation.Circuit().Wires()
-	for i, wire := range wires {
-		oldCharge := g.simulation.State(wire).Charge()
-		charge := newSimulation.State(wire).Charge()
-		if oldCharge == charge {
-			continue
+		wires := g.simulation.Circuit().Wires()
+		for i, wire := range wires {
+			oldCharge := g.simulation.State(wire).Charge()
+			charge := newSimulation.State(wire).Charge()
+			if oldCharge == charge {
+				continue
+			}
+			position := wire.Bounds().Min
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(position.X), float64(position.Y))
+			r, gr, b, a := g.simulationImage.Palette[charge+1].RGBA()
+			op.ColorM.Scale(float64(r)/0xFFFF, float64(gr)/0xFFFF, float64(b)/0xFFFF, float64(a)/0xFFFF)
+			g.backgroundImage.DrawImage(g.wireImages[i], op)
 		}
-		position := wire.Bounds().Min
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(position.X), float64(position.Y))
-		r, gr, b, a := g.simulationImage.Palette[charge+1].RGBA()
-		op.ColorM.Scale(float64(r)/0xFFFF, float64(gr)/0xFFFF, float64(b)/0xFFFF, float64(a)/0xFFFF)
-		g.backgroundImage.DrawImage(g.wireImages[i], op)
+		g.simulation = newSimulation
 	}
-	g.simulation = newSimulation
-
 	// Process keyboard and mouse actions.
 
 	g.handleKeyboard()
