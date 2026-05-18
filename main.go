@@ -93,38 +93,38 @@ func (g *Game) handleKeyboard() error {
 		g.reloadSimulation()
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyP) {
-		// Pause/ unpause the simulation. When paused, the simulation will be redrawn in a powered-down state.
-		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
-			g.simulationPaused = !g.simulationPaused
-			if g.simulationPaused {
-				drawPoweredDown(g.simulationImage)
+
+	// Pause/unpause the simulation. When paused, the simulation will be redrawn in a powered-down state.
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		g.simulationPaused = !g.simulationPaused
+		if g.simulationPaused {
+			drawPoweredDown(g.simulationImage)
+		}
+		g.reloadSimulation()
+	}
+
+
+	// Halt the simulation and save the current state to a file
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		gifFilename := fmt.Sprintf("test-%d.gif", time.Now().Unix())
+		filename, err := dialog.File().Filter("GIF files", "gif").Title("Save simulation state").SetStartFile(gifFilename).Save()
+		if err != nil {
+			// Check if the error is because the user cancelled the save dialog. 
+			// If so, just return nil; otherwise, print the error and return it.
+			if err.Error() == "Cancelled" {
+				fmt.Println("Save cancelled")
+				return nil
 			}
-			g.reloadSimulation()
+			fmt.Println("Error in file dialog: ", err)
+			return err
+		}
+		err = saveImage(g.simulationImage, filename)
+		if err != nil {
+			fmt.Println("Error saving file: ", err)
+			return err
 		}
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyF) {
-		// Halt the simulation and save the current state to a file
-		if inpututil.IsKeyJustPressed(ebiten.KeyF) {
-			gifFilename := fmt.Sprintf("test-%d.gif", time.Now().Unix())
-			filename, err := dialog.File().Filter("GIF files", "gif").Title("Save simulation state").SetStartFile(gifFilename).Save()
-			if err != nil {
-				// Check if the error is because the user cancelled the save dialog. 
-				// If so, just return nil; otherwise, print the error and return it.
-				if err.Error() == "Cancelled" {
-					fmt.Println("Save cancelled")
-					return nil
-				}
-				fmt.Println("Error in file dialog: ", err)
-				return err
-			}
-			err = saveImage(g.simulationImage, filename)
-			if err != nil {
-				fmt.Println("Error saving file: ", err)
-				return err
-			}
-		}
-	}
+
 
 	switch {
 	// Handle the arrow keys since up and down can be pressed at the same time.
