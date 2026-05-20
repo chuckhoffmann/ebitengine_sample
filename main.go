@@ -81,9 +81,11 @@ func (g *Game) Update() error {
 	return nil
 }
 
-// handleKeyboard processes keyboard inputs. It returns an error if 
-// the user presses the escape key to quit the game, or if there is 
-// an error in the file dialog when the user tries to save the simulation state.
+// handleKeyboard processes one frame of keyboard input and applies
+// corresponding simulation updates.
+//
+// It returns ebiten.Termination when the user requests exit (Escape).
+// It returns any non-cancelled error from the save file dialog or image save path.
 func (g *Game) handleKeyboard() error {
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
@@ -111,7 +113,7 @@ func (g *Game) handleKeyboard() error {
 		gifFilename := fmt.Sprintf("test-%d.gif", time.Now().Unix())
 		filename, err := dialog.File().Filter("GIF files", "gif").Title("Save simulation state").SetStartFile(gifFilename).Save()
 		if err != nil {
-			// Check if the error occured because the user cancelled the save dialog. 
+			// Check if the error occurred because the user cancelled the save dialog. 
 			// If so, just return nil; otherwise, print the error and return it.
 			if err == dialog.ErrCancelled {
 				fmt.Println("Save cancelled")
