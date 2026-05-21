@@ -158,32 +158,34 @@ func (g *Game) handleKeyboard() error {
 	return nil
 }
 
+// handleMouse processes one frame of mouse input and applies corresponding simulation updates.
 func (g *Game) handleMouse() {
+	 x, y := ebiten.CursorPosition()
 
-	// Get the mouse position. 
-	x, y := ebiten.CursorPosition()
+    keyboardMovedCursor := g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY
+    mouseMoved := x != g.mouseCursorX || y != g.mouseCursorY
 
-	// Check if the left mouse button is pressed
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		//
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) ||
-			 g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY {
-			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-			g.reloadSimulation()
-		} else if x != g.mouseCursorX || y != g.mouseCursorY {
-			flipPixel(x, y, g.simulationImage)
-			g.reloadSimulation()
-		}
-	}
+    // Keep cursor aligned with the live mouse position whenever the mouse moves.
+    if mouseMoved {
+        g.mouseCursorX = x
+        g.mouseCursorY = y
+        g.cursorX = x
+        g.cursorY = y
+    }
 
-	// If the mouse has moved, update the cursor and mouse cursor positions.
-	if x != g.mouseCursorX || y != g.mouseCursorY {
-		g.mouseCursorX = x
-		g.mouseCursorY = y
-		g.cursorX = g.mouseCursorX
-		g.cursorY = g.mouseCursorY
-	}
-}
+    shouldPaint := false
+    if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+        shouldPaint = true
+    } else if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && (mouseMoved || keyboardMovedCursor) {
+        shouldPaint = true
+    }
+
+    if shouldPaint {
+        flipPixel(g.cursorX, g.cursorY, g.simulationImage)
+        g.reloadSimulation()
+    }
+ }
+
 
 func (g *Game) reloadSimulation() {
 	g.simulation = simulation.New(g.simulationImage)
