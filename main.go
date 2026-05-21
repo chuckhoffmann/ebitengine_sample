@@ -129,7 +129,10 @@ func (g *Game) handleKeyboard() error {
 		}
 	}
 
-
+	// Handle the cursor movement through WASD or arrow keys.
+	oldCursorX := g.cursorX
+	oldCursorY := g.cursorY
+	
 	switch {
 	// Handle the arrow keys since up and down can be pressed at the same time.
 	// if both are pressed, the evaluation order is W, ArrowUp, S, ArrowDown
@@ -154,6 +157,11 @@ func (g *Game) handleKeyboard() error {
 		if g.cursorX < g.width-1 {
 			g.cursorX++
 		}
+	}
+	// If the cursor has moved and the space key is pressed, flip the pixel at the new cursor position and reload the simulation.
+	if (g.cursorX != oldCursorX || g.cursorY != oldCursorY) && ebiten.IsKeyPressed(ebiten.KeySpace) {
+		flipPixel(g.cursorX, g.cursorY, g.simulationImage)
+		g.reloadSimulation()
 	}
 
 	return nil
