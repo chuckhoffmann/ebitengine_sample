@@ -31,7 +31,6 @@ type Game struct {
 	cursorY                int
 	mouseCursorX          int
 	mouseCursorY          int
-	leftMouseButtonPressed bool
 	simulationPaused       bool
 }
 
@@ -161,42 +160,28 @@ func (g *Game) handleKeyboard() error {
 
 func (g *Game) handleMouse() {
 
-	// Handle mouse inputs
-	// Get the mouse position. If the mouse has moved, update the cursor position.
+	// Get the mouse position. 
 	x, y := ebiten.CursorPosition()
+
+	// Check if the left mouse button is pressed
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		//
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) ||
+			 g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY {
+			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
+			g.reloadSimulation()
+		} else if x != g.mouseCursorX || y != g.mouseCursorY {
+			flipPixel(x, y, g.simulationImage)
+			g.reloadSimulation()
+		}
+	}
+
+	// If the mouse has moved, update the cursor and mouse cursor positions.
 	if x != g.mouseCursorX || y != g.mouseCursorY {
-		// The mouse has moved
 		g.mouseCursorX = x
 		g.mouseCursorY = y
 		g.cursorX = g.mouseCursorX
 		g.cursorY = g.mouseCursorY
-		// Reset the left mouse button pressed flag. This will allow the user to click and drag the mouse to draw a wire
-		g.leftMouseButtonPressed = false
-
-	}
-	// Check if the left mouse button is pressed
-	// g.leftMouseButtonPressed is used to test if the left mouse button has just been pressed or is being held down
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		if !g.leftMouseButtonPressed {
-			// The left mouse button has just been pressed
-			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-			g.reloadSimulation()
-			g.leftMouseButtonPressed = true
-		} else {
-			// The left mouse button is being held down.
-			// If the cursor has moved (i.e. through arrow keys) then flip the pixel
-			if g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY {
-				flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-				g.reloadSimulation()
-			}
-		}
-
-	} else {
-		if g.leftMouseButtonPressed {
-			// The left mouse button has just been released
-			g.leftMouseButtonPressed = false
-
-		}
 	}
 }
 
