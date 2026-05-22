@@ -20,35 +20,35 @@ import (
 )
 
 type Game struct {
-	simulation             *simulation.Simulation
-	simulationImage        *image.Paletted
-	backgroundImage        *ebiten.Image
-	wireImages             []*ebiten.Image
-	width                  int
-	height                 int
-	scale                  int
-	cursorX                int
-	cursorY                int
-	mouseCursorX          int
-	mouseCursorY          int
-	simulationPaused       bool
+	simulation       *simulation.Simulation
+	simulationImage  *image.Paletted
+	backgroundImage  *ebiten.Image
+	wireImages       []*ebiten.Image
+	width            int
+	height           int
+	scale            int
+	cursorX          int
+	cursorY          int
+	mouseCursorX     int
+	mouseCursorY     int
+	simulationPaused bool
 }
 
 func (g *Game) Update() error {
-	// Check if the simulation is paused. If so, just update the background image 
+	// Check if the simulation is paused. If so, just update the background image
 	// to reflect the current state; otherwise, advance the simulation by one step.
-	
+
 	if g.simulationPaused {
 		g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
 	} else {
 		var newSimulation *simulation.Simulation
 		newSimulation = g.simulation.Step()
-	
+
 		// Draw the new simulation state onto the simulation image and
 		// update the background image to reflect the current game state.
 		newSimulation.Draw(g.simulationImage)
 		g.backgroundImage = ebiten.NewImageFromImage(g.simulationImage)
-		
+
 		// Iterate through each wire in the simulation circuit. Update
 		// the wire's image if its charge has changed since the last
 		// simulation step.
@@ -91,12 +91,6 @@ func (g *Game) handleKeyboard() error {
 		return ebiten.Termination
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-		g.reloadSimulation()
-	}
-
-
 	// Pause/unpause the simulation. When paused, the simulation will be redrawn in a powered-down state.
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
 		g.simulationPaused = !g.simulationPaused
@@ -106,16 +100,15 @@ func (g *Game) handleKeyboard() error {
 		g.reloadSimulation()
 	}
 
-
 	// Halt the simulation and save the current state to a file
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		gifFilename := fmt.Sprintf("test-%d.gif", time.Now().Unix())
 		filename, err := dialog.File().
-				Filter("GIF files", "gif").
-				Title("Save simulation state").
-				SetStartFile(gifFilename).Save()
+			Filter("GIF files", "gif").
+			Title("Save simulation state").
+			SetStartFile(gifFilename).Save()
 		if err != nil {
-			// Check if the error occurred because the user cancelled the save dialog. 
+			// Check if the error occurred because the user cancelled the save dialog.
 			// If so, note it otherwise, print the error and return it.
 			if err == dialog.ErrCancelled {
 				fmt.Println("Save cancelled")
@@ -132,10 +125,17 @@ func (g *Game) handleKeyboard() error {
 		}
 	}
 
+	//
+
+	shouldPaint := false
+
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		shouldPaint = true
+	}
 	// Handle the cursor movement through WASD or arrow keys.
 	oldCursorX := g.cursorX
 	oldCursorY := g.cursorY
-	
+
 	switch {
 	// Handle the arrow keys since up and down can be pressed at the same time.
 	// if both are pressed, the evaluation order is W, ArrowUp, S, ArrowDown
@@ -163,6 +163,10 @@ func (g *Game) handleKeyboard() error {
 	}
 	// If the cursor has moved and the space key is pressed, flip the pixel at the new cursor position and reload the simulation.
 	if (g.cursorX != oldCursorX || g.cursorY != oldCursorY) && ebiten.IsKeyPressed(ebiten.KeySpace) {
+		shouldPaint = true
+	}
+
+	if shouldPaint {
 		flipPixel(g.cursorX, g.cursorY, g.simulationImage)
 		g.reloadSimulation()
 	}
@@ -172,32 +176,31 @@ func (g *Game) handleKeyboard() error {
 
 // handleMouse processes one frame of mouse input and applies corresponding simulation updates.
 func (g *Game) handleMouse() {
-	 x, y := ebiten.CursorPosition()
+	x, y := ebiten.CursorPosition()
 
-    keyboardMovedCursor := g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY
-    mouseMoved := x != g.mouseCursorX || y != g.mouseCursorY
+	keyboardMovedCursor := g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY
+	mouseMoved := x != g.mouseCursorX || y != g.mouseCursorY
 
-    // Keep cursor aligned with the live mouse position whenever the mouse moves.
-    if mouseMoved {
-        g.mouseCursorX = x
-        g.mouseCursorY = y
-        g.cursorX = x
-        g.cursorY = y
-    }
+	// Keep cursor aligned with the live mouse position whenever the mouse moves.
+	if mouseMoved {
+		g.mouseCursorX = x
+		g.mouseCursorY = y
+		g.cursorX = x
+		g.cursorY = y
+	}
 
-    shouldPaint := false
-    if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-        shouldPaint = true
-    } else if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && (mouseMoved || keyboardMovedCursor) {
-        shouldPaint = true
-    }
+	shouldPaint := false
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		shouldPaint = true
+	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && (mouseMoved || keyboardMovedCursor) {
+		shouldPaint = true
+	}
 
-    if shouldPaint {
-        flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-        g.reloadSimulation()
-    }
- }
-
+	if shouldPaint {
+		flipPixel(g.cursorX, g.cursorY, g.simulationImage)
+		g.reloadSimulation()
+	}
+}
 
 func (g *Game) reloadSimulation() {
 	g.simulation = simulation.New(g.simulationImage)
