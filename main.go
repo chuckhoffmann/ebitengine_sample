@@ -31,7 +31,6 @@ type Game struct {
 	cursorY                int
 	mouseCursorX          int
 	mouseCursorY          int
-	leftMouseButtonPressed bool
 	simulationPaused       bool
 }
 
@@ -171,46 +170,34 @@ func (g *Game) handleKeyboard() error {
 	return nil
 }
 
+// handleMouse processes one frame of mouse input and applies corresponding simulation updates.
 func (g *Game) handleMouse() {
+	 x, y := ebiten.CursorPosition()
 
-	// Handle mouse inputs
-	// Get the mouse position. If the mouse has moved, update the cursor position.
-	x, y := ebiten.CursorPosition()
-	if x != g.mouseCursorX || y != g.mouseCursorY {
-		// The mouse has moved
-		g.mouseCursorX = x
-		g.mouseCursorY = y
-		g.cursorX = g.mouseCursorX
-		g.cursorY = g.mouseCursorY
-		// Reset the left mouse button pressed flag. This will allow the user to click and drag the mouse to draw a wire
-		g.leftMouseButtonPressed = false
+    keyboardMovedCursor := g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY
+    mouseMoved := x != g.mouseCursorX || y != g.mouseCursorY
 
-	}
-	// Check if the left mouse button is pressed
-	// g.leftMouseButtonPressed is used to test if the left mouse button has just been pressed or is being held down
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		if !g.leftMouseButtonPressed {
-			// The left mouse button has just been pressed
-			flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-			g.reloadSimulation()
-			g.leftMouseButtonPressed = true
-		} else {
-			// The left mouse button is being held down.
-			// If the cursor has moved (i.e. through arrow keys) then flip the pixel
-			if g.cursorX != g.mouseCursorX || g.cursorY != g.mouseCursorY {
-				flipPixel(g.cursorX, g.cursorY, g.simulationImage)
-				g.reloadSimulation()
-			}
-		}
+    // Keep cursor aligned with the live mouse position whenever the mouse moves.
+    if mouseMoved {
+        g.mouseCursorX = x
+        g.mouseCursorY = y
+        g.cursorX = x
+        g.cursorY = y
+    }
 
-	} else {
-		if g.leftMouseButtonPressed {
-			// The left mouse button has just been released
-			g.leftMouseButtonPressed = false
+    shouldPaint := false
+    if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+        shouldPaint = true
+    } else if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && (mouseMoved || keyboardMovedCursor) {
+        shouldPaint = true
+    }
 
-		}
-	}
-}
+    if shouldPaint {
+        flipPixel(g.cursorX, g.cursorY, g.simulationImage)
+        g.reloadSimulation()
+    }
+ }
+
 
 func (g *Game) reloadSimulation() {
 	g.simulation = simulation.New(g.simulationImage)
