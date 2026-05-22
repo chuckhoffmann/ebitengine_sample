@@ -111,16 +111,20 @@ func (g *Game) handleKeyboard() error {
 	// Halt the simulation and save the current state to a file
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		gifFilename := fmt.Sprintf("test-%d.gif", time.Now().Unix())
-		filename, err := dialog.File().Filter("GIF files", "gif").Title("Save simulation state").SetStartFile(gifFilename).Save()
+		filename, err := dialog.File().
+				Filter("GIF files", "gif").
+				Title("Save simulation state").
+				SetStartFile(gifFilename).Save()
 		if err != nil {
 			// Check if the error occurred because the user cancelled the save dialog. 
-			// If so, just return nil; otherwise, print the error and return it.
+			// If so, note it otherwise, print the error and return it.
 			if err == dialog.ErrCancelled {
 				fmt.Println("Save cancelled")
 				return nil
+			} else {
+				fmt.Println("Error in file dialog: ", err)
+				return err
 			}
-			fmt.Println("Error in file dialog: ", err)
-			return err
 		}
 		err = saveImage(g.simulationImage, filename)
 		if err != nil {
